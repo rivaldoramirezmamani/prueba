@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tienda Online</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<h1>🛒 Tienda Online</h1>
+
+<div id="auth">
+  <input type="email" id="email" placeholder="Correo">
+  <input type="password" id="password" placeholder="Contraseña">
+  <button onclick="login()">Login</button>
+  <button onclick="register()">Registrarse</button>
+</div>
+
+<button onclick="logout()">Cerrar sesión</button>
+
+<h2>Productos</h2>
+<ul id="productos"></ul>
+
+<script src="app.js"></script>
+</body>
+</html>
