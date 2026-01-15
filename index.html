@@ -1,1 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD Productos - Supabase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <h2>Registrar producto</h2>
+
+  <input type="text" id="nombre" placeholder="Nombre">
+  <input type="number" id="precio" placeholder="Precio">
+  <input type="number" id="stock" placeholder="Stock">
+  <button onclick="crearProducto()">Guardar</button>
+
+  <hr>
+
+  <h2>Lista de productos</h2>
+
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaProductos"></tbody>
+  </table>
+
+  <script src="app.js"></script>
+</body>
+</html>
 
