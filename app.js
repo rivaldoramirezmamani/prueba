@@ -7,30 +7,88 @@ const supabase = window.supabase.createClient(
   supabaseKey
 );
 
-// 🔹 CREATE
+// CREATE
 async function crearProducto() {
   const nombre = document.getElementById("nombre").value;
   const precio = document.getElementById("precio").value;
-  const stock = document.getElementById("stock").value;
 
-  if (!nombre || !precio || !stock) {
+  if (!nombre || !precio) {
     alert("Completa todos los campos");
     return;
   }
 
   const { error } = await supabase
     .from("productos")
-    .insert([{ nombre, precio, stock }]);
+    .insert([{ nombre, precio }]);
 
   if (error) {
     alert("Error: " + error.message);
   } else {
     document.getElementById("nombre").value = "";
     document.getElementById("precio").value = "";
-    document.getElementById("stock").value = "";
     listarProductos();
   }
 }
+
+// READ
+async function listarProductos() {
+  const { data, error } = await supabase
+    .from("productos")
+    .select("*")
+    .order("id", { ascending: false });
+
+  const tabla = document.getElementById("tablaProductos");
+  tabla.innerHTML = "";
+
+  if (error) {
+    tabla.innerHTML = "<tr><td colspan='3'>Error al cargar</td></tr>";
+    return;
+  }
+
+  data.forEach(p => {
+    tabla.innerHTML += `
+      <tr>
+        <td>${p.nombre}</td>
+        <td>${p.precio}</td>
+        <td>
+          <button onclick="editarProducto(${p.id}, '${p.nombre}', ${p.precio})">Editar</button>
+          <button onclick="eliminarProducto(${p.id})">Eliminar</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// UPDATE
+async function editarProducto(id, nombre, precio) {
+  const nuevoNombre = prompt("Nombre:", nombre);
+  const nuevoPrecio = prompt("Precio:", precio);
+
+  if (!nuevoNombre || !nuevoPrecio) return;
+
+  await supabase
+    .from("productos")
+    .update({ nombre: nuevoNombre, precio: nuevoPrecio })
+    .eq("id", id);
+
+  listarProductos();
+}
+
+// DELETE
+async function eliminarProducto(id) {
+  if (!confirm("¿Eliminar producto?")) return;
+
+  await supabase
+    .from("productos")
+    .delete()
+    .eq("id", id);
+
+  listarProductos();
+}
+
+// Cargar al iniciar
+listarProductos();
+
 
 // 🔹 READ
 async function listarProductos() {
