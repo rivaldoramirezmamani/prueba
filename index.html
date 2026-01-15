@@ -1,108 +1,48 @@
-// Agrega esto al inicio para ver errores en consola
-const supabaseUrl = "https://ripihhubodzzkcjvoihh.supabase.co";
-const supabaseKey = "sb_publishable_ZKaLrYHn9Mw2OkMNP62OLw_iGhHdz8_";
-
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-// Verificar conexión
-async function verificarConexion() {
-  console.log("Verificando conexión con Supabase...");
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD Productos</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 20px auto; }
+    input, button { padding: 8px; margin: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    button { cursor: pointer; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
   
-  const { data, error } = await supabase
-    .from('productos')
-    .select('count')
-    .limit(1);
-    
-  if (error) {
-    console.error("❌ Error de conexión:", error);
-    alert("Error de conexión: " + error.message);
-    return false;
-  }
+  <h1>📦 Gestor de Productos</h1>
   
-  console.log("✅ Conexión exitosa");
-  return true;
-}
+  <h2>➕ Registrar producto</h2>
+  <div>
+    <input type="text" id="nombre" placeholder="Nombre del producto" required>
+    <input type="number" id="precio" placeholder="Precio" min="0" step="0.01" required>
+    <button onclick="crearProducto()">Guardar</button>
+  </div>
 
-// READ (Modificado para mejor depuración)
-async function listarProductos() {
-  console.log("Cargando productos...");
-  
-  const { data, error } = await supabase
-    .from("productos")
-    .select("*")
-    .order("id", { ascending: false });
+  <hr>
 
-  const tabla = document.getElementById("tablaProductos");
+  <h2>📋 Lista de productos</h2>
+  <div id="mensajeCarga">Cargando productos...</div>
   
-  if (error) {
-    console.error("Error al cargar productos:", error);
-    tabla.innerHTML = `
+  <table>
+    <thead>
       <tr>
-        <td colspan="3" style="color: red;">
-          Error: ${error.message}<br>
-          <small>Verifica las políticas RLS en Supabase</small>
-        </td>
-      </tr>`;
-    return;
-  }
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaProductos"></tbody>
+  </table>
 
-  console.log("Productos recibidos:", data);
-  
-  if (data.length === 0) {
-    tabla.innerHTML = `
-      <tr>
-        <td colspan="3">
-          No hay productos registrados.
-          <br><small>Agrega uno usando el formulario arriba</small>
-        </td>
-      </tr>`;
-    return;
-  }
-
-  tabla.innerHTML = "";
-  data.forEach(p => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${p.nombre || 'Sin nombre'}</td>
-      <td>${p.precio || '0'}</td>
-      <td>
-        <button onclick="editarProducto(${p.id}, '${p.nombre}', ${p.precio})">Editar</button>
-        <button onclick="eliminarProducto(${p.id})">Eliminar</button>
-      </td>
-    `;
-    tabla.appendChild(row);
-  });
-}
-
-// CREATE
-async function crearProducto() {
-  const nombre = document.getElementById("nombre").value.trim();
-  const precio = parseFloat(document.getElementById("precio").value);
-
-  if (!nombre || isNaN(precio)) {
-    alert("Completa todos los campos correctamente");
-    return;
-  }
-
-  const { error } = await supabase
-    .from("productos")
-    .insert([{ nombre, precio }]);
-
-  if (error) {
-    alert("Error al guardar: " + error.message);
-  } else {
-    document.getElementById("nombre").value = "";
-    document.getElementById("precio").value = "";
-    listarProductos();
-  }
-}
-
-// Cargar al iniciar
-document.addEventListener('DOMContentLoaded', async function() {
-  await verificarConexion();
-  await listarProductos();
-});
-
+  <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+    <small>Estado: <span id="estadoConexion">Conectando...</span></small>
+  </div>
 
   <script src="app.js"></script>
 </body>
