@@ -21,10 +21,13 @@ async function supabaseRequest(endpoint, method = 'GET', body = null) {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, options);
     
     if (!response.ok) {
-        throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Error completo:', errorText);
+        throw new Error(`Error: ${response.status} - ${errorText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data;
 }
 
 // Función para cargar productos
@@ -78,16 +81,31 @@ function mostrarMensaje(texto, tipo = 'success') {
 async function guardarProducto(event) {
     event.preventDefault();
 
-    const nombre = document.getElementById('nombre').value;
+    const nombre = document.getElementById('nombre').value.trim();
     const precio = parseFloat(document.getElementById('precio').value);
 
+    // Validaciones
+    if (!nombre) {
+        mostrarMensaje('Por favor ingresa un nombre', 'error');
+        return;
+    }
+
+    if (isNaN(precio) || precio <= 0) {
+        mostrarMensaje('Por favor ingresa un precio válido', 'error');
+        return;
+    }
+
     try {
+        console.log('Intentando guardar:', { nombre, precio });
+
         const nuevoProducto = {
             nombre: nombre,
             precio: precio
         };
 
-        await supabaseRequest('productos', 'POST', nuevoProducto);
+        const resultado = await supabaseRequest('productos', 'POST', nuevoProducto);
+        
+        console.log('Guardado exitoso:', resultado);
 
         mostrarMensaje('¡Producto guardado exitosamente!', 'success');
         
@@ -96,8 +114,8 @@ async function guardarProducto(event) {
         cargarProductos();
 
     } catch (error) {
-        mostrarMensaje(`Error al guardar producto: ${error.message}`, 'error');
-        console.error('Error:', error);
+        console.error('Error completo:', error);
+        mostrarMensaje(`Error al guardar: ${error.message}`, 'error');
     }
 }
 
