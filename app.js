@@ -1,110 +1,110 @@
-// Agrega esto al inicio para ver errores en consola
-const supabaseUrl = "https://ripihhubodzzkcjvoihh.supabase.co";
-const supabaseKey = "sb_publishable_ZKaLrYHn9Mw2OkMNP62OLw_iGhHdz8_";
+// Configuración de Supabase
+const SUPABASE_URL = 'https://ripihubodzkcjvoihh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ZKaLrYHn9Mw2OkMNP62OLw_iGhHdz8_';
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// Función para hacer peticiones a Supabase
+async function supabaseRequest(endpoint, method = 'GET', body = null) {
+    const options = {
+        method: method,
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        }
+    };
 
-// Verificar conexión
-async function verificarConexion() {
-  console.log("Verificando conexión con Supabase...");
-  
-  const { data, error } = await supabase
-    .from('productos')
-    .select('count')
-    .limit(1);
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, options);
     
-  if (error) {
-    console.error("❌ Error de conexión:", error);
-    alert("Error de conexión: " + error.message);
-    return false;
-  }
-  
-  console.log("✅ Conexión exitosa");
-  return true;
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
+    }
+
+    return await response.json();
 }
 
-// READ (Modificado para mejor depuración)
-async function listarProductos() {
-  console.log("Cargando productos...");
-  
-  const { data, error } = await supabase
-    .from("productos")
-    .select("*")
-    .order("id", { ascending: false });
+// Función para cargar productos
+async function cargarProductos() {
+    const loadingDiv = document.getElementById('loading');
+    const productosDiv = document.getElementById('productos');
+    
+    try {
+        loadingDiv.style.display = 'block';
+        productosDiv.innerHTML = '';
 
-  const tabla = document.getElementById("tablaProductos");
-  
-  if (error) {
-    console.error("Error al cargar productos:", error);
-    tabla.innerHTML = `
-      <tr>
-        <td colspan="3" style="color: red;">
-          Error: ${error.message}<br>
-          <small>Verifica las políticas RLS en Supabase</small>
-        </td>
-      </tr>`;
-    return;
-  }
+        const productos = await supabaseRequest('productos?select=*');
 
-  console.log("Productos recibidos:", data);
-  
-  if (data.length === 0) {
-    tabla.innerHTML = `
-      <tr>
-        <td colspan="3">
-          No hay productos registrados.
-          <br><small>Agrega uno usando el formulario arriba</small>
-        </td>
-      </tr>`;
-    return;
-  }
+        loadingDiv.style.display = 'none';
 
-  tabla.innerHTML = "";
-  data.forEach(p => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${p.nombre || 'Sin nombre'}</td>
-      <td>${p.precio || '0'}</td>
-      <td>
-        <button onclick="editarProducto(${p.id}, '${p.nombre}', ${p.precio})">Editar</button>
-        <button onclick="eliminarProducto(${p.id})">Eliminar</button>
-      </td>
-    `;
-    tabla.appendChild(row);
-  });
+        if (productos.length === 0) {
+            productosDiv.innerHTML = '<p style="color: white; text-align: center; font-size: 1.2em;">No hay productos disponibles</p>';
+            return;
+        }
+
+        productos.forEach(producto => {
+            const card = document.createElement('div');
+            card.className = 'producto-card';
+            card.innerHTML = `
+                <h3>${producto.nombre}</h3>
+                <p class="precio">$${parseFloat(producto.precio).toFixed(2)}</p>
+            `;
+            productosDiv.appendChild(card);
+        });
+
+    } catch (error) {
+        loadingDiv.style.display = 'none';
+        mostrarMensaje(`Error al cargar productos: ${error.message}`, 'error');
+        console.error('Error:', error);
+    }
 }
 
-// CREATE
-async function crearProducto() {
-  const nombre = document.getElementById("nombre").value.trim();
-  const precio = parseFloat(document.getElementById("precio").value);
+// Función para mostrar mensajes
+function mostrarMensaje(texto, tipo = 'success') {
+    const mensajeDiv = document.getElementById('mensaje');
+    mensajeDiv.className = tipo;
+    mensajeDiv.textContent = texto;
+    mensajeDiv.style.display = 'block';
 
-  if (!nombre || isNaN(precio)) {
-    alert("Completa todos los campos correctamente");
-    return;
-  }
-
-  const { error } = await supabase
-    .from("productos")
-    .insert([{ nombre, precio }]);
-
-  if (error) {
-    alert("Error al guardar: " + error.message);
-  } else {
-    document.getElementById("nombre").value = "";
-    document.getElementById("precio").value = "";
-    listarProductos();
-  }
+    setTimeout(() => {
+        mensajeDiv.style.display = 'none';
+    }, 3000);
 }
 
-// Cargar al iniciar
-document.addEventListener('DOMContentLoaded', async function() {
-  await verificarConexion();
-  await listarProductos();
-});
+// Función para guardar producto
+async function guardarProducto(event) {
+    event.preventDefault();
 
-// Cargar al iniciar
-document.addEventListener('DOMContentLoaded', async function() {
-  await verificarConexion();
-  await listarProductos();
+    const nombre = document.getElementById('nombre').value;
+    const precio = parseFloat(document.getElementById('precio').value);
+
+    try {
+        const nuevoProducto = {
+            nombre: nombre,
+            precio: precio
+        };
+
+        await supabaseRequest('productos', 'POST', nuevoProducto);
+
+        mostrarMensaje('¡Producto guardado exitosamente!', 'success');
+        
+        document.getElementById('productoForm').reset();
+        
+        cargarProductos();
+
+    } catch (error) {
+        mostrarMensaje(`Error al guardar producto: ${error.message}`, 'error');
+        console.error('Error:', error);
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    cargarProductos();
+    
+    const form = document.getElementById('productoForm');
+    form.addEventListener('submit', guardarProducto);
 });
